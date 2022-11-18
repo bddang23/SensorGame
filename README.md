@@ -1,5 +1,5 @@
 # SensorGame
-##This project is from group 3 in the CIS403 - Mobile App Development Class. 
+This project is from group 3 in the CIS403 - Mobile App Development Class. 
 
 Our app will be a game that will have a character and interacts with the sensors in three ways. 
 Firstly, we will be using the ambient light sensor to put the character to sleep when the light levels are lowered. 
