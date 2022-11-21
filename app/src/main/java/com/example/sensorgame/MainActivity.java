@@ -3,6 +3,8 @@ package com.example.sensorgame;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.Arrays;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     ImageButton btnHint;
@@ -24,6 +27,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     SensorManager sensorManager;
     Sensor accSensor;
     Sensor lightSensor;
+    long initialTime;
+    long endTime;
 
     public static final String TAG = "sensorAPP";
     public static int STAGE =0;
@@ -70,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void checkForJump() {
+        //endGame();
     }
 
     private void checkForSleep() {
@@ -98,11 +104,36 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void startGame() {
+        initialTime = System.currentTimeMillis();
+        Log.i("sensorGame", initialTime + "");
+    }
+
+    /*
+    Method should be called when the final action is performed.
+    Method uses Intent to go to results page and saves time values with sharedPreferences
+     */
+    public void endGame(){
+        endTime = System.currentTimeMillis();
+        Log.i(TAG, endTime + " " + initialTime);
+
+        Intent i = new Intent(this, result.class);
+
+        //Create sharedPreferences object
+        SharedPreferences sharedPreferences = getSharedPreferences("ResultsInfo", MODE_PRIVATE);
+        //Create editor for shared preferences
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+        //Save time information
+        edit.putLong("initialTime", initialTime);
+        edit.putLong("endTime", endTime);
+
+        edit.apply();
+
+        startActivity(i);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        sensorManager.unregisterListener((SensorListener) this);
+        //sensorManager.unregisterListener((SensorListener) this);
     }
 }
