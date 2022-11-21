@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     long jumpPeakTime;
     double v0;
     public static final double G = -10;
-    public static final int ERROR_MAX = 5;  // Error counter limit. Higher the MAX, more likely to enter error state
+    public static final int ERROR_MAX = 7;  // Error counter limit. Higher the MAX, more likely to enter error state
     int errorCounter;
     float errorCheck;
 
@@ -54,8 +54,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         jumpStartTime = 0;
         jumpPeakTime = 0;
         v0 = 0;
-        int errorCounter = ERROR_MAX;
-        float errorCheck = 0;
+        errorCounter = ERROR_MAX;
+        errorCheck = 0;
 
         totalTime = System.currentTimeMillis();
 
@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager.registerListener((SensorEventListener) this,accSensor,SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener((SensorEventListener) this,lightSensor,SensorManager.SENSOR_DELAY_UI);
         startGame();
-//        checkForSleep();
+        checkForSleep();
     }
 
     @Override
@@ -88,10 +88,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     checkForSleep();
                 }
                 break;
-//            case Sensor.TYPE_LINEAR_ACCELERATION:
-//                if (STAGE == 3)
-//                    checkForJump(sensorEvent);
-//                break;
         }
     }
 
@@ -141,19 +137,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     startActivity(intent);
                 }
                 else {
-                    cancelJump(0);
+                    cancelJump("bad jump");
                 }
             }
         }
         // Logic to check for "error" state in which jump state is entered by mistake.
         // This is triggered if phone appears to be sitting in the same state too long
         // If counter trips too many times, cancel jump.
-        else if (jumpStarted && (Math.abs(G + combined) < 3 || Math.abs(combined - errorCheck) < 2.75)){
+        else if (jumpStarted && (Math.abs(G + combined) < 3.5 || Math.abs(combined - errorCheck) < 2.75)){
 //            Log.d(TAG,"errorCounter: " + errorCounter + " gravCheck:" + (Math.abs(G + combined)) + " errorCheck:"+ Math.abs(combined - errorCheck));
             errorCounter--;
             errorCheck = combined;
             if (errorCounter <= 0){
-                cancelJump(1);
+                cancelJump("error state");
                 errorCounter = ERROR_MAX;
             }
         }
@@ -170,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     // Cancel the jump and reset the level
-    private void cancelJump(int reason){
+    private void cancelJump(String reason){
         Log.d(TAG,"jump cancelled: " + reason);
         jumpStarted = false;
         jumpReleased = false;
@@ -178,13 +174,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void checkForSleep() {
-//        STAGE = 2;
+        STAGE = 2;
     }
 
     private void checkForShake() {
-//        STAGE = 3;
-//        txtCommand.setText("Tim is energetic and \nwant to jump ...");
-//        ivStatus.setImageResource(R.drawable.jump);
+        STAGE = 3;
+        txtCommand.setText("Tim is energetic and \nwant to jump ...");
+        ivStatus.setImageResource(R.drawable.jump);
     }
 
     @Override
@@ -205,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void startGame() {
-//        STAGE = 1;
+        STAGE = 1;
     }
 
     @Override
