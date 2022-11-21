@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -15,6 +16,9 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.Arrays;
+import java.util.Date;
+
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     ImageButton btnHint;
     TextView txtCommand;
@@ -22,6 +26,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     SensorManager sensorManager;
     Sensor accSensor;
     Sensor lightSensor;
+    long initialTime;
+    long endTime;
 
     boolean jumpStarted;
     boolean jumpReleased;
@@ -33,8 +39,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public static final int ERROR_MAX = 7;  // Error counter limit. Higher the MAX, more likely to enter error state
     int errorCounter;
     float errorCheck;
-
-    long totalTime;
 
     public static final String TAG = "sensorAPP";
     public static int STAGE =0;
@@ -56,8 +60,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         v0 = 0;
         errorCounter = ERROR_MAX;
         errorCheck = 0;
-
-        totalTime = System.currentTimeMillis();
 
         sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -98,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         float x = values[0];
         float y = values[1];
         float z = values[2];
-        float combined = Math.abs(x) + Math.abs(y) + Math.abs(z);
+        float combined = Math.abs(x) + Math.abs(y)/* + Math.abs(z)*/;
 
         // Track in between values (Debug)
         if (jumpStarted && !jumpReleased){
@@ -127,14 +129,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                     sensorManager.unregisterListener(this);
 
-                    totalTime = (System.currentTimeMillis() - totalTime) / 1000;
-                    Log.d(TAG," TOTAL TIME: " + totalTime + "s");
-
-                    //  THIS IS WHERE WE MOVE TO RESULTS
-                    Intent intent = new Intent(this, result.class);
-                    intent.putExtra("totalTime",totalTime);
-                    intent.putExtra("height",height);
-                    startActivity(intent);
+                    // TODO: End
+                    endGame();
                 }
                 else {
                     cancelJump("bad jump");
@@ -202,6 +198,31 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void startGame() {
         STAGE = 1;
+        initialTime = System.currentTimeMillis();
+        Log.i("sensorGame", initialTime + "");
+    }
+
+    /*
+    Method should be called when the final action is performed.
+    Method uses Intent to go to results page and saves time values with sharedPreferences
+     */
+    public void endGame(){
+        endTime = System.currentTimeMillis();
+        Log.i(TAG, endTime + " " + initialTime);
+
+        Intent i = new Intent(this, result.class);
+
+        //Create sharedPreferences object
+        SharedPreferences sharedPreferences = getSharedPreferences("ResultsInfo", MODE_PRIVATE);
+        //Create editor for shared preferences
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+        //Save time information
+        edit.putLong("initialTime", initialTime);
+        edit.putLong("endTime", endTime);
+
+        edit.apply();
+
+        startActivity(i);
     }
 
     @Override
