@@ -216,6 +216,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return (v0 * v0) / (2 * g);
     }
 
+
     // Cancel the jump and reset the level
     private void cancelJump(String reason){
         Log.d(TAG,"jump cancelled: " + reason);
