@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Log.d(TAG,"sleeping");
             ivStatus.setImageResource(R.drawable.sleep);
             STAGE = 2;
+            txtCommand.setText("Tim is going to miss his class, Find a way to wake Tim up!");
         }
     }
 
