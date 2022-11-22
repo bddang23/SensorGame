@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     Sensor lightSensor;
     long initialTime;
     long endTime;
+    int shakes = 1;
 
     public static final String TAG = "sensorAPP";
     public static int STAGE =0;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         switch(sensorEvent.sensor.getType()){
             case Sensor.TYPE_ACCELEROMETER:
                 if (STAGE == 2){
-                    checkForShake();
+                    checkForShake(sensorEvent);
                 }else if (STAGE ==3){
                     checkForJump();
                 }
@@ -81,25 +82,41 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void checkForSleep() {
     }
 
-    private void checkForShake() {
+    private void checkForShake(SensorEvent sensorEvent) {
+        float xValue = sensorEvent.values[0];
+        float yValue = sensorEvent.values[1];
+        float zValue = sensorEvent.values[2];
+        float acceleration = 10f;
+        float currAcceleration = (float) Math.sqrt((double) (xValue * xValue + yValue * yValue + zValue * zValue));
+        float deltaValue = currAcceleration - SensorManager.GRAVITY_EARTH;
+        acceleration = acceleration * 0.9f + deltaValue;
+        if (acceleration > 15) {
+            switch (shakes) {
+                case 1:
+                    txtCommand.setText("Tim is in a deep sleep, it will take multiple shakes to wake him up");
+                    break;
+                case 2:
+                    ivStatus.setImageResource(R.drawable.wake_up);
+                    txtCommand.setText("Tim is starting to wake up, but is still very drowsy...");
+                    break;
+                case 3:
+                    ivStatus.setImageResource(R.drawable.jump);
+                    txtCommand.setText("Tim is awake and energetic now, he wants to jump!");
+                    STAGE++;
+                    break;
+            }
+            shakes++;
+        }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
         switch(sensor.getType()){
-            case Sensor.TYPE_ACCELEROMETER:
-                if (STAGE == 2){
-                    checkForShake();
-                }else if (STAGE ==3){
-                    checkForJump();
-                }
-                break;
             case Sensor.TYPE_LIGHT:
                 if (STAGE == 1){
                     checkForSleep();
                 }
                 break;
-
         }
     }
 
