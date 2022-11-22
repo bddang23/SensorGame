@@ -53,8 +53,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     Set<Double> aSet;
     double height;
 
-    public static final String TAG = "sensorAPP";
-    public static int STAGE = 1;
 
 
     @Override
@@ -91,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Toast.makeText(getApplicationContext(), "Shake your phone three separate times to make Tim wake up", Toast.LENGTH_LONG).show();
                     break;
                 case 3:
-                    Toast.makeText(getApplicationContext(), "Throw your phone up in a flat position (screen side up) to make Tim jump", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Throw your phone up in a flat position (SCREEN SIDE UP) to make Tim jump", Toast.LENGTH_LONG).show();
                     break;
             }
         });
@@ -126,6 +124,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
                 break;
         }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
     }
 
     // Logic for checking for jumps. Slightly busted
@@ -208,10 +211,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     // Logic for calculating approx. height of jump based on assumed initial velocity, time (from release to peak) and gravity
-    private double getHeight(double v0y, double t, double g){
-        return (v0y * t) - (.5 * g * (t * t));
-    }
-
     private double getHeight(double v0, double g){
         return (v0 * v0) / (2 * g);
     }
@@ -273,17 +272,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     break;
             }
             shakes++;
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-        switch(sensor.getType()){
-            case Sensor.TYPE_LIGHT:
-                if (STAGE == 1){
-                    //checkForSleep();
-                }
-                break;
         }
     }
 
