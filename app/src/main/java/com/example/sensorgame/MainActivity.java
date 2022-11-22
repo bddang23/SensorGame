@@ -18,6 +18,8 @@ import android.widget.TextView;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     ImageButton btnHint;
@@ -38,7 +40,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public static final double G = -10;
     public static final int ERROR_MAX = 7;  // Error counter limit. Higher the MAX, more likely to enter error state
     int errorCounter;
-    float errorCheck;
+    double errorCheck;
+    Set<Double> vSet;
+    public static final int V0_CHECK = 5; // Number of times to record acceleration values to average out for v0
+    int v0Counter;
 
     public static final String TAG = "sensorAPP";
     public static int STAGE =0;
@@ -60,6 +65,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         v0 = 0;
         errorCounter = ERROR_MAX;
         errorCheck = 0;
+        vSet = new HashSet<>();
+        v0Counter = V0_CHECK;
 
         sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -100,18 +107,31 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         float x = values[0];
         float y = values[1];
         float z = values[2];
-        float combined = Math.abs(x) + Math.abs(y)/* + Math.abs(z)*/;
+//        double combined = Math.abs(G + /*Math.abs(x) +*/ (Math.abs(y) + Math.abs(z)));
+        double combined = Math.abs(Math.sqrt(z*z + y*y));
 
         // Track in between values (Debug)
-        if (jumpStarted && !jumpReleased){
-            Log.d(TAG,/*"x:"+x+"y:"+y+"z:"+z+*/"combined:"+combined);
+        if (jumpStarted /*&& !jumpReleased*/)
+            Log.d(TAG,"x:"+x+" y:"+y+" z:"+z+" combined:"+combined + " time: " + (System.currentTimeMillis() - jumpStartTime) / 1000.0);
+
+        if (jumpStarted && v0Counter >= 0){
+            vSet.add(Math.abs(G + combined) / 60.0);
+            v0Counter--;
+        }
+        if (v0Counter <= 0 && v0 == 0){
+            double sum = 0;
+            for (Double d : vSet){
+                sum+=d;
+                Log.d(TAG,"v0 set: "+d);
+            }
+            v0 = sum / (double)vSet.size();
         }
 
         // If acceleration is strong enough, either consider jump started or ended / released
         if (combined > 18){
             if (!jumpStarted){
                 jumpStartTime = System.currentTimeMillis();
-                v0 = Math.abs(combined + G) / 60.0;
+//                v0 = Math.abs(G + combined) / 60.0;
                 Log.d(TAG,"Jump started...");
                 txtCommand.setText("Jumping...?");
 
@@ -140,8 +160,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // Logic to check for "error" state in which jump state is entered by mistake.
         // This is triggered if phone appears to be sitting in the same state too long
         // If counter trips too many times, cancel jump.
-        else if (jumpStarted && (Math.abs(G + combined) < 3.5 || Math.abs(combined - errorCheck) < 2.75)){
-//            Log.d(TAG,"errorCounter: " + errorCounter + " gravCheck:" + (Math.abs(G + combined)) + " errorCheck:"+ Math.abs(combined - errorCheck));
+        else if (jumpStarted && (Math.abs(G + combined) < 2.5 || Math.abs(combined - errorCheck) < 2.5)){
+            Log.d(TAG,"errorCounter: " + errorCounter + " gravCheck:" + (Math.abs(G + combined)) + " errorCheck:"+ Math.abs(combined - errorCheck));
             errorCounter--;
             errorCheck = combined;
             if (errorCounter <= 0){
@@ -167,6 +187,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         jumpStarted = false;
         jumpReleased = false;
         txtCommand.setText("Tim is energetic and \nwant to jump ...");
+        v0Counter = V0_CHECK;
+        v0 = 0;
     }
 
     private void checkForSleep() {
