@@ -1,15 +1,19 @@
 package com.example.sensorgame;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorListener;
 import android.hardware.SensorManager;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -30,10 +34,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     Sensor lightSensor;
     long initialTime;
     long endTime;
+    //used to store the light levels on create as the most bright the room will be
+    int loadTimeLight = 0;
+    public static final String TAG = "sensorAPP";
+    public static int STAGE =1;
+
     int shakes = 1;
 
     public static final String TAG = "sensorAPP";
     public static int STAGE = 1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+
 
         //when the hint button is clicked, give a toast hint on what to do for the current stage of the game (using switch case)
         btnHint.setOnClickListener(view -> {
@@ -68,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onStart() {
         super.onStart();
         sensorManager.registerListener((SensorEventListener) this,accSensor,SensorManager.SENSOR_DELAY_UI);
-        sensorManager.registerListener((SensorEventListener) this,lightSensor,SensorManager.SENSOR_DELAY_UI);
+        sensorManager.registerListener(this,lightSensor,1);
 
         startGame();
     }
@@ -85,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
             case Sensor.TYPE_LIGHT:
                 if (STAGE == 1){
-                    checkForSleep();
+                    checkForSleep(sensorEvent);
                 }
                 break;
         }
@@ -95,7 +106,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //endGame();
     }
 
-    private void checkForSleep() {
+    private void checkForSleep(SensorEvent sensorEvent) {
+        //get the light levels on first load
+        //this will be brightest the room will be
+        if (loadTimeLight == 0){
+            loadTimeLight = (int) sensorEvent.values[0];
+            Log.d(TAG,loadTimeLight + "");
+        }
+        //if the current light is half of the light on load time the character is now asleep
+        if((loadTimeLight/2) > (int)sensorEvent.values[0]){
+            Log.d(TAG,"sleeping");
+            ivStatus.setImageResource(R.drawable.sleep);
+            STAGE = 2;
+            txtCommand.setText("Tim is going to miss his class, Find a way to wake Tim up!");
+        }
     }
 
     private void checkForShake(SensorEvent sensorEvent) {
@@ -135,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         switch(sensor.getType()){
             case Sensor.TYPE_LIGHT:
                 if (STAGE == 1){
-                    checkForSleep();
+                    //checkForSleep();
                 }
                 break;
         }
