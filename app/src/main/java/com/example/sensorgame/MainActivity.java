@@ -75,7 +75,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager.registerListener((SensorEventListener) this,accSensor,SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener((SensorEventListener) this,lightSensor,SensorManager.SENSOR_DELAY_UI);
         startGame();
-        checkForSleep();
     }
 
     @Override
@@ -196,13 +195,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void checkForSleep() {
-        STAGE = 2;
     }
 
     private void checkForShake() {
-        STAGE = 3;
-        txtCommand.setText("Tim is energetic and \nwant to jump ...");
-        ivStatus.setImageResource(R.drawable.jump);
     }
 
     @Override
