@@ -35,14 +35,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     boolean jumpReleased;
     long jumpStartTime;
     double v0;
-    public static final double G = -10;
+    public static final double G = -9.81; // Constant value for gravity
     public static final int ERROR_MAX = 7;  // Error counter limit. Higher the MAX, more likely to enter error state
     int errorCounter;
     double errorCheck;
-    Set<Double> vSet;
-    public static final int V0_CHECK = 5; // Number of times to record acceleration values to average out for v0
-    int v0Counter;
     Set<Double> aSet;
+    double height;
 
     public static final String TAG = "sensorAPP";
     public static int STAGE =0;
@@ -63,10 +61,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         v0 = 0;
         errorCounter = ERROR_MAX;
         errorCheck = 0;
-//        vSet = new HashSet<>();
-//        v0Counter = V0_CHECK;
         aSet = new HashSet<>();
-
+        height = 0;
 
         sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -104,11 +100,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void checkForJump(SensorEvent sensorEvent) {
         // Get values xyz, and combine them to approximate acceleration + gravity
         float[] values = sensorEvent.values;
-        float x = values[0];
-        float y = values[1];
         float z = values[2];
-//        double combined = Math.abs(G + /*Math.abs(x) +*/ (Math.abs(y) + Math.abs(z)));
-//        double combined = Math.abs(G+ Math.sqrt(z*z + y*y));   // Hypotenuse of Z and Y axes
         double combined = Math.abs(G+ Math.abs(z));
 
         // Track in between values (Debug)
@@ -119,32 +111,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (jumpStarted)
             aSet.add(combined);
 
-//        if (jumpStarted && v0Counter >= 0){
-//            vSet.add(Math.abs(G + combined));
-//            v0Counter--;
-//        }
-//        if (v0Counter <= 0 && v0 == 0){
-//            double sum = 0;
-//            for (Double d : vSet){
-//                sum+=d;
-//                Log.d(TAG,"v0 set: "+d);
-//            }
-//            v0 = sum / (double)vSet.size();
-//        }
-
-        // If acceleration is strong enough, either consider jump started or ended / released
+        // If acceleration is strong enough, consider jump started
         if (combined > 5){
             if (!jumpStarted){
                 jumpStartTime = System.currentTimeMillis();
-//                v0 = Math.abs(G + combined) / 60.0;
                 Log.d(TAG,"Jump started...");
                 txtCommand.setText("Jumping...?");
-
                 jumpStarted = true;
             }
         }
+        // If phone appears to enter rest state after jump has started, consider jump finished
         if (combined < 5 && jumpStarted){
+            // If jump appears to have left user's hand, finalize jump data
             if (jumpReleased){
+                // Get average acceleration from acceleration set
                 double sum = 0;
                 for (Double d : aSet){
                     Log.d(TAG,"individual A: " + d);
@@ -159,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 v0 = (avgAcc * t)/2.0;
 
                 // Plug in values to height equation.
-                double height = getHeight(v0,avgAcc);
+                height = getHeight(v0,avgAcc);
 
                 // If jump is too short (in either height or time) cancel it
                 Log.d(TAG,"A: " + avgAcc + "T: "+ t + " V0: " + v0 + " H: " + height + "m");
@@ -180,9 +160,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // Logic to check for "error" state in which jump state is entered by mistake.
         // This is triggered if phone appears to be sitting in the same state too long
         // If counter trips too many times, cancel jump.
-//        else if (jumpStarted && (Math.abs(combined) < 1.5 /*|| Math.abs(combined - errorCheck) < 2.5)*/)){
         else if (jumpStarted && (/*y < 1 ||*/ Math.abs(G + Math.abs(z)) < 1.5)){
-//            Log.d(TAG,"errorCounter: " + errorCounter + " gravCheck:" + (Math.abs(combined)) + " errorCheck:"+ Math.abs(combined - errorCheck));
             errorCounter--;
             errorCheck = combined;
             if (errorCounter <= 0){
@@ -261,6 +239,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //Save time information
         edit.putLong("initialTime", initialTime);
         edit.putLong("endTime", endTime);
+        // Save height information
+        edit.putFloat("jumpHeight",(float)height);
 
         edit.apply();
 
