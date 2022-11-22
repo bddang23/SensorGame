@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -32,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     int shakes = 1;
 
     public static final String TAG = "sensorAPP";
-    public static int STAGE =0;
+    public static int STAGE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +47,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+
+        //when the hint button is clicked, give a toast hint on what to do for the current stage of the game (using switch case)
+        btnHint.setOnClickListener(view -> {
+            switch (STAGE) {
+                case 1:
+                    Toast.makeText(getApplicationContext(), "Put your device in low light to make Tim go to sleep", Toast.LENGTH_LONG).show();
+                    break;
+                case 2:
+                    Toast.makeText(getApplicationContext(), "Shake your phone three separate times to make Tim wake up", Toast.LENGTH_LONG).show();
+                    break;
+                case 3:
+                    Toast.makeText(getApplicationContext(), "Throw your phone up in a flat position (screen side up) to make Tim jump", Toast.LENGTH_LONG).show();
+                    break;
+            }
+        });
     }
 
     @Override
@@ -83,14 +99,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void checkForShake(SensorEvent sensorEvent) {
+        //get the x, y, and z values for the event
         float xValue = sensorEvent.values[0];
         float yValue = sensorEvent.values[1];
         float zValue = sensorEvent.values[2];
         float acceleration = 10f;
+        //calculate the acceleration
         float currAcceleration = (float) Math.sqrt((double) (xValue * xValue + yValue * yValue + zValue * zValue));
         float deltaValue = currAcceleration - SensorManager.GRAVITY_EARTH;
         acceleration = acceleration * 0.9f + deltaValue;
+        //if acceleration of the move/shake is greater than 15
         if (acceleration > 15) {
+            //then it is a good shake, 3 shakes total are needed and for each one set a new text and image
             switch (shakes) {
                 case 1:
                     txtCommand.setText("Tim is in a deep sleep, it will take multiple shakes to wake him up");
@@ -102,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 case 3:
                     ivStatus.setImageResource(R.drawable.jump);
                     txtCommand.setText("Tim is awake and energetic now, he wants to jump!");
+                    //after the 3rd shake move to the next stage
                     STAGE++;
                     break;
             }
